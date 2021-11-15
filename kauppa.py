@@ -9,10 +9,9 @@ import password
 import datetime
 from cassandra.cluster import Cluster
 from tabulate import tabulate
+import db
 
-cluster = Cluster(['172.21.0.2'],port=9042)
-session = cluster.connect('testi',wait_for_all_pools=True)
-session.execute('USE testi')
+session = db.session
 
 def getInventory(item):
 	query = ("SELECT inventory FROM inventory_counts WHERE uuid = " + item)

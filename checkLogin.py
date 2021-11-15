@@ -3,12 +3,11 @@
 import uuid
 import password
 from cassandra.cluster import Cluster
-from consolemenu import *
-from consolemenu.items import *
+import db
 
-cluster = Cluster(['172.21.0.2'],port=9042)
-session = cluster.connect('testi',wait_for_all_pools=True)
-session.execute('USE testi')
+session = db.session
+
+# TODO: trying to log in with non-existing user gives err 500
 
 class User():
 	password = password.Password(method='sha1', hash_encoding='base64')

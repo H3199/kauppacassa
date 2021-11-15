@@ -2,12 +2,9 @@
 
 import uuid
 from cassandra.cluster import Cluster
-from consolemenu import *
-from consolemenu.items import *
+import db
 
-cluster = Cluster(['172.21.0.2'],port=9042)
-session = cluster.connect('testi',wait_for_all_pools=True)
-session.execute('USE testi')
+session = db.session
 
 def createProduct(prod_name, prod_price, stock):
 	prod_id = str(uuid.uuid4())
