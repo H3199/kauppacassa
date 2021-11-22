@@ -21,20 +21,20 @@ def comment(user_id, chain_id, comment):
 def showChain(chain_id):
 	query_chains = ("SELECT comment_id FROM com_chain12 WHERE chain_id = "+str(chain_id))
 	comments = []
-	rows=session.execute(query_chains)
+	rows = session.execute(query_chains)
 	for row in rows:
-		comment_id = row.comment_id
-		query_comments = ("SELECT user_id, comment, timestamp FROM comments WHERE comment_id= "+str(comment_id))
-		get_comments=session.execute(query_comments)
-		for comment in get_comments:
-			# Get name of the user_id
-			query_customer_info = ("SELECT first_name, last_name FROM customer_info WHERE customer_id = "+str(comment.user_id))
-			name_rows = session.execute(query_customer_info)
-			for name_row in name_rows:
-				name = (name_row.first_name + " " + name_row.last_name)
-			comments.append([name, comment.comment, comment.timestamp])
-	for i in comments:
-		print(i[0] + ": " + i[1] + " on " + i[2].strftime('%Y-%m-%d %H:%M:%S'))
+		if row.comment_id:
+			comment_id = row.comment_id
+			query_comments = ("SELECT user_id, comment, timestamp FROM comments WHERE comment_id= "+str(comment_id))
+			get_comments=session.execute(query_comments)
+			for comment in get_comments:
+				# Get name of the user_id
+				query_customer_info = ("SELECT first_name, last_name FROM customer_info WHERE customer_id = "+str(comment.user_id))
+				name_rows = session.execute(query_customer_info)
+				for name_row in name_rows:
+					name = (name_row.first_name + " " + name_row.last_name)
+				comments.append([name, comment.comment, comment.timestamp])
+	return comments
 
 def showBoard(board_id):
 	chain_list = []
@@ -47,7 +47,8 @@ def showBoard(board_id):
 			query_chains = ("SELECT chain_name, timestamp FROM com_chain12 WHERE chain_id = "+str(chain.chain_id))
 			rows = session.execute(query_chains)
 			for row in rows:
-				chain_list.append([row.chain_name, row.timestamp])
+				if row.chain_name: # Entries with no name are comments.
+					chain_list.append([row.chain_name, row.timestamp, str(chain.chain_id)])
 	# Get the sub boards of the board
 	query_for_sub_boards = ("SELECT child_id FROM board_children WHERE board_id = "+board_id)
 	sub_boards = session.execute(query_for_sub_boards)
@@ -56,7 +57,8 @@ def showBoard(board_id):
 			query_boards = ("SELECT board_name, timestamp FROM com_boards WHERE board_id = "+str(board.child_id))
 			rows = session.execute(query_boards)
 			for row in rows:
-				sub_board_list.append([row.board_name, row.timestamp])
+				if row.board_name:
+					sub_board_list.append([row.board_name, row.timestamp, str(board.child_id)])
 	return [sub_board_list, chain_list]
 
 def boardTree(level):
@@ -66,6 +68,7 @@ def boardTree(level):
 	sub_boards = [] # "We" will add dynamic levels "later". Perhaps add board level in the DB?
 	# - ok board level added in DB level, now what? How does a board know it's level?
 	# - child/parent relation tables added in DB, use them to make this make sense.
+	# - this function is pretty much obsolete now thanks to child/parent logic
 	for board in boards:
 		if board.board_name:
 			if not board.parent_board_id:
@@ -85,17 +88,7 @@ def createChain(chain_name, board_id):
 	query_boards = ("INSERT INTO com_boards (board_id, timestamp, chain_id) VALUES ("+board_id+", \'"+now+"\', "+chain_id+")")
 	session.execute(query_chains)
 	session.execute(query_boards)
-"""
-def createBoard(board_name, parent_board_id):
-	now_iso8601 = datetime.datetime.now()
-	now = str(int(now_iso8601.timestamp()*1000))
-	board_id = str(uuid.uuid4())
-	if parent_board_id:
-		query_boards = ("INSERT INTO com_boards (board_id, timestamp, board_name, parent_board_id) VALUES ("+board_id+", \'"+now+"\', \'"+board_name+"\', "+parent_board_id+")")
-	else:
-		query_boards = ("INSERT INTO com_boards (board_id, timestamp, board_name) VALUES ("+board_id+", \'"+now+"\', \'"+board_name+"\')")
-	session.execute(query_boards)
-"""
+
 def createBoard(board_name, parent_id=None, board_level=-1):
 	now_iso8601 = datetime.datetime.now()
 	now = str(int(now_iso8601.timestamp()*1000))

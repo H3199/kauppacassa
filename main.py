@@ -101,6 +101,7 @@ class StringGenerator(object):
 
     @cherrypy.expose
     def boardMainMenu(self):
+        # TODO: this uses (soon to be) deprecated boardTree method
         returnLst = []
         root_boards = forum.boardTree(0)
         for board in root_boards:
@@ -111,13 +112,23 @@ class StringGenerator(object):
 
     @cherrypy.expose
     def goToBoard(self, board_id):
-        #TODO make this print sub-board and chain links instead of just raw sewage
         returnLst = []
-        board = forum.showBoard(board_id)
-        return str(board)
-#        for chain in board:
-#            returnLst.append(chain)
-#        return ''.join(returnLst)
+        sub_boards = forum.showBoard(board_id)[0]
+        chains = forum.showBoard(board_id)[1]
+        for subs in sub_boards:
+            returnLst.append("<form method='get' action='goToBoard'><button name='board_id' value="+subs[2]+" type='submit'>"+subs[0]+"</button></form></body></html>")
+        for chain in chains:
+            returnLst.append("<form method='get' action='goToChain'><button name='chain_id' value="+chain[2]+" type='submit'>"+chain[0]+"</button></form></body></html>")
+        return ''.join(returnLst)
+
+    @cherrypy.expose
+    def goToChain(self, chain_id):
+        returnLst = []
+        comments = forum.showChain(chain_id)
+        for comment in comments:
+            returnLst.append(comment[2].strftime('%Y-%m-%d %H:%M:%S') + "<br>" + comment[0] + " commented: <br>" + comment[1] +"<br><br>")
+    #        returnLst.append(comment[0] + ": " + comment[1] + " on " + comment[2].strftime('%Y-%m-%d %H:%M:%S'))
+        return ''.join(returnLst)
 
     @cherrypy.expose
     def productMenu(self, prod_id):
