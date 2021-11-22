@@ -7,6 +7,7 @@ import kauppa
 import checkLogin
 import createUser
 import createProduct
+import forum
 
 import cherrypy
 
@@ -34,6 +35,9 @@ class StringGenerator(object):
             <form method="get" action="showLogin">
               <button type="submit">Show login</button>
             </form>
+            <form method="get" action="boardMainMenu">
+              <button type="submit">Forums</button>
+            </form>
             <form method="get" action="showOrderHistory">
               <button type="submit">Order history</button>
             </form>
@@ -45,7 +49,7 @@ class StringGenerator(object):
 
     @cherrypy.expose
     def showLogin(self):
-        if cherrypy.session['session_id'] != "":
+        if cherrypy.session['session_id']:
             customer_id = cherrypy.session['customer_id']
             return ("Customer ID: "+str(customer_id) + home_button)
         else:
@@ -96,11 +100,30 @@ class StringGenerator(object):
         return ''.join(returnLst) + home_button
 
     @cherrypy.expose
+    def boardMainMenu(self):
+        returnLst = []
+        root_boards = forum.boardTree(0)
+        for board in root_boards:
+            board_id = board[1]
+            board_name = board[0]
+            returnLst.append("<form method='get' action='goToBoard'><button name='board_id' value="+str(board_id)+" type='submit'>"+board_name+"</button></form></body></html>")
+        return ''.join(returnLst)
+
+    @cherrypy.expose
+    def goToBoard(self, board_id):
+        #TODO make this print sub-board and chain links instead of just raw sewage
+        returnLst = []
+        board = forum.showBoard(board_id)
+        return str(board)
+#        for chain in board:
+#            returnLst.append(chain)
+#        return ''.join(returnLst)
+
+    @cherrypy.expose
     def productMenu(self, prod_id):
         price = kauppa.getPrice(prod_id) / 100
         stock = kauppa.getStock(prod_id)
         name = kauppa.getProdName(prod_id)
-        #buy = kauppa.buy(product)
         return "<html><head>"+str(name)+"</head><body><p>Price: "+str(price)+"€</p><p>Stock: "+str(stock)+" units.</p><br><form method='get' action='buyProduct'><button name='prod_id' value="+prod_id+" type='submit'>Buy "+str(name)+"!</button></form></body></html>"
 
     @cherrypy.expose
@@ -122,8 +145,6 @@ class StringGenerator(object):
     def showOrderHistory(self):
         customer_id = cherrypy.session['customer_id']
         orders = kauppa.getOrderHistory(customer_id)
-    #    returnStr = map(''.join, orders)
-    #    for order in orders:
         return orders
 
     @cherrypy.expose
@@ -132,13 +153,12 @@ class StringGenerator(object):
         try:
             loginCorrect = checkLogin.checkCreds(user_name, user_pass)[0]
             customer_id = checkLogin.checkCreds(user_name, user_pass)[1]
-            if loginCorrect == True:
+            if loginCorrect:
                 try:
                     session = kauppa.login(str(customer_id))
                     session_id = session[0]
                 except Exception as err:
                     return(str(err) + " kauppa.login failed.")
-                #user = User(session_id, customer_id, user_name)
                 cherrypy.session['session_id'] = session_id
                 cherrypy.session['customer_id'] = customer_id
                 cherrypy.session['user_name'] = user_name
@@ -152,9 +172,6 @@ class StringGenerator(object):
     @cherrypy.expose
     def logout(self):
         try:
-#            user.session_id = ""
-#            user.customer_id = ""
-#            user.email = ""
             session_id = cherrypy.session['session_id']
             customer_id = cherrypy.session['customer_id']
             login_time = cherrypy.session['login_time']
