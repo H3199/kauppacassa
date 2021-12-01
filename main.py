@@ -159,7 +159,7 @@ class StringGenerator(object):
         return orders
 
     @cherrypy.expose
-    # TODO: move checkCreds method here.
+    # TODO: move checkCreds method here. /issues/2
     def login(self, user_name, user_pass):
         userFound = checkLogin.checkCreds(user_name, user_pass)
         if userFound:
