@@ -13,10 +13,18 @@ def comment(user_id, chain_id, comment):
 	comment_id = str(uuid.uuid4())
 	query_comments = ("INSERT INTO comments (comment_id, chain_id, user_id, timestamp, comment) VALUES ("+comment_id+", "+chain_id+", "+user_id+", \'"+now+"\', \'"+comment+"\')")
 	query_chains = ("INSERT INTO com_chain12 (chain_id, comment_id, timestamp) VALUES ("+chain_id+", "+comment_id+", \'"+now+"\')")
-#	print(query_comments)
-#	print(query_chains)
+	query_karma = ("UPDATE comment_karma SET karma = karma + 0 WHERE comment_id = "+comment_id)
 	session.execute(query_comments)
 	session.execute(query_chains)
+	session.execute(query_karma)
+
+def vote(comment_id, direction):
+	upvote = ("UPDATE comment_karma SET karma = karma + 1 WHERE comment_id = "+str(comment_id))
+	downvote = ("UPDATE comment_karma SET karma = karma - 1 WHERE comment_id = "+str(comment_id))
+	if direction == "up":
+		session.execute(upvote)
+	if direction == "down":
+		session.execute(downvote)
 
 def showChain(chain_id):
 	query_chains = ("SELECT comment_id FROM com_chain12 WHERE chain_id = "+str(chain_id))
@@ -26,14 +34,21 @@ def showChain(chain_id):
 		if row.comment_id:
 			comment_id = row.comment_id
 			query_comments = ("SELECT user_id, comment, timestamp FROM comments WHERE comment_id= "+str(comment_id))
-			get_comments=session.execute(query_comments)
+			get_comments = session.execute(query_comments)
 			for comment in get_comments:
 				# Get name of the user_id
 				query_customer_info = ("SELECT first_name, last_name FROM customer_info WHERE customer_id = "+str(comment.user_id))
+				query_karma = ("SELECT karma FROM comment_karma WHERE comment_id = " + str(comment_id))
+				karma_rows = session.execute(query_karma)
+				for karma_row in karma_rows:
+					if karma_row.karma:
+						karma = karma_row.karma
+					else:
+						karma = 0
 				name_rows = session.execute(query_customer_info)
 				for name_row in name_rows:
 					name = (name_row.first_name + " " + name_row.last_name)
-				comments.append([name, comment.comment, comment.timestamp])
+				comments.append([name, comment.comment, comment.timestamp, karma])
 	return comments
 
 def showBoard(board_id):

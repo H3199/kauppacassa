@@ -126,7 +126,7 @@ class StringGenerator(object):
         returnLst = []
         comments = forum.showChain(chain_id)
         for comment in comments:
-            returnLst.append(comment[2].strftime('%Y-%m-%d %H:%M:%S') + "<br>" + comment[0] + " commented: <br>" + comment[1] +"<br><br>")
+            returnLst.append(comment[2].strftime('%Y-%m-%d %H:%M:%S') + " karma: " + str(comment[3]) + "<br>" + comment[0] + " commented: <br>" + comment[1] +"<br><br>")
     #        returnLst.append(comment[0] + ": " + comment[1] + " on " + comment[2].strftime('%Y-%m-%d %H:%M:%S'))
         return ''.join(returnLst)
 
