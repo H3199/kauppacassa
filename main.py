@@ -126,7 +126,7 @@ class StringGenerator(object):
         returnLst = []
         comments = forum.showChain(chain_id)
         for comment in comments:
-            returnLst.append(comment[2].strftime('%Y-%m-%d %H:%M:%S') + " karma: " + str(comment[3]) + "<br>" + comment[0] + " commented: <br>" + comment[1] +"<br><br>")
+            returnLst.append(comment[2].strftime('%Y-%m-%d %H:%M:%S') + "<br>karma: " + str(comment[3]) + "<br>" + comment[0] + " commented: <br>" + comment[1] +"<br><br>")
     #        returnLst.append(comment[0] + ": " + comment[1] + " on " + comment[2].strftime('%Y-%m-%d %H:%M:%S'))
         return ''.join(returnLst)
 
@@ -159,26 +159,27 @@ class StringGenerator(object):
         return orders
 
     @cherrypy.expose
-    # Ei kovin tietoturvalline...
+    # TODO: move checkCreds method here.
     def login(self, user_name, user_pass):
-        try:
+        userFound = checkLogin.checkCreds(user_name, user_pass)
+        if userFound:
             loginCorrect = checkLogin.checkCreds(user_name, user_pass)[0]
             customer_id = checkLogin.checkCreds(user_name, user_pass)[1]
-            if loginCorrect:
-                try:
-                    session = kauppa.login(str(customer_id))
-                    session_id = session[0]
-                except Exception as err:
-                    return(str(err) + " kauppa.login failed.")
-                cherrypy.session['session_id'] = session_id
-                cherrypy.session['customer_id'] = customer_id
-                cherrypy.session['user_name'] = user_name
-                cherrypy.session['login_time'] = session[1]
-                return ("login correct for "+str(customer_id)) + " " + user_name + home_button
-            else:
-                return "login incorrect"
-        except Exception as err:
-            return (str(err) +"loginCorrect: "+str(loginCorrect))
+        else:
+            return "Login incorrect"
+        if loginCorrect:
+            try:
+                session = kauppa.login(str(customer_id))
+                session_id = session[0]
+            except Exception as err:
+                return(str(err) + " kauppa.login failed.")
+            cherrypy.session['session_id'] = session_id
+            cherrypy.session['customer_id'] = customer_id
+            cherrypy.session['user_name'] = user_name
+            cherrypy.session['login_time'] = session[1]
+            return ("login correct for "+str(customer_id)) + " " + user_name + home_button
+        else:
+            return "login incorrect"
 
     @cherrypy.expose
     def logout(self):
