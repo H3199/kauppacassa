@@ -24,7 +24,6 @@ def comment(user_id, chain_id, comment):
     session.execute(query_karma)
     session.execute(query_user_comment_history)
 
-
 def showUserKarma(user_id):
     karma = []
     comment_history_query = ("SELECT comment_id FROM user_comment_history WHERE user_id = " + str(user_id))
@@ -36,7 +35,6 @@ def showUserKarma(user_id):
         for row in karma_rows:
             karma.append(row.karma)
     return sum(karma)
-
 
 def vote(comment_id, direction):
     upvote = ("UPDATE comment_karma SET karma = karma + 1 WHERE comment_id = " + str(comment_id))
@@ -73,7 +71,6 @@ def showChain(chain_id):
                 comments.append([name, comment.comment, comment.timestamp, karma])
     return comments
 
-
 def showBoard(board_id):
     chain_list = []
     sub_board_list = []
@@ -99,7 +96,6 @@ def showBoard(board_id):
                     sub_board_list.append([row.board_name, row.timestamp, str(board.child_id)])
     return [sub_board_list, chain_list]
 
-
 def boardTree(level):
     query_boards = ("SELECT board_id, board_name, parent_board_id FROM com_boards")
     boards = session.execute(query_boards)
@@ -119,7 +115,6 @@ def boardTree(level):
     if level == 1:
         return (sub_boards)
 
-
 def createChain(chain_name, board_id):
     now_iso8601 = datetime.datetime.now()
     now = str(int(now_iso8601.timestamp() * 1000))
@@ -130,7 +125,6 @@ def createChain(chain_name, board_id):
                 "INSERT INTO com_boards (board_id, timestamp, chain_id) VALUES (" + board_id + ", \'" + now + "\', " + chain_id + ")")
     session.execute(query_chains)
     session.execute(query_boards)
-
 
 def createBoard(board_name, parent_id=None, board_level=-1):
     now_iso8601 = datetime.datetime.now()

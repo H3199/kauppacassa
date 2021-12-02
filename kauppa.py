@@ -58,8 +58,6 @@ def getCustomerList():
 	return rows
 
 def getOrderHistory(customer_id):
-	#TODO product price
-	#TODO total price
 	query_order_history = ("SELECT order_id FROM order_history WHERE customer_id = "+str(customer_id))
 	order_ids = session.execute(query_order_history)
 	order_names = []
@@ -89,10 +87,11 @@ def getOrderHistory(customer_id):
 
 def buy(item, session_id, customer_id):
 	price = getPrice(item)
-#	active_customer = str(getLogin(session_id))
 	active_customer = str(customer_id)
+	# TODO: check for balance first
 	query_customer_balance = ("UPDATE customer_balance SET balance = balance - "+ str(price) +" WHERE customer_id = " + active_customer)
 	session.execute(query_customer_balance)
+	# TODO: check for stock first
 	query_stock = ("UPDATE inventory_counts SET inventory = inventory - 1 WHERE uuid = " + item)
 	session.execute(query_stock)
 	order_id = str(uuid.uuid4())
@@ -100,9 +99,27 @@ def buy(item, session_id, customer_id):
 	now = str(int(now_iso8601.timestamp()*1000))
 	query_order_history = ("INSERT INTO order_history (customer_id, order_id) VALUES ("+active_customer+", "+order_id+")")
 	query_orderid_sessionid_customerid = ("INSERT INTO orderid_sessionid_customerid (order_id, session_id, customer_id, ordered, product_id, status) VALUES ("+order_id+", "+str(session_id)+", "+active_customer+", \'"+now+"\', "+item+", \'ordered\')")
+	# Create entry for product rating:
+	query_product_rating = ("INSERT INTO product_rating (product_id, order_id) VALUES ("+item+", "+order_id+")")
 	session.execute(query_orderid_sessionid_customerid)
 	session.execute(query_order_history)
+	session.execute(query_product_rating)
 	return order_id
+
+def rate(product_id, order_id, rating): # This could be done with just order_id and rating, but that would use an additional DB query.
+	if not 0 <= rating <= 5:
+		return False
+	# Check if this order has already been rated:
+	check_product_rating = ("SELECT rating FROM product_rating WHERE product_id = "+product_id+" AND order_id = "+order_id)
+	rated = session.execute(check_product_rating)
+	for rate in rated:
+		if rate.rating:
+			return False
+	update_product_rating = ("UPDATE product_rating SET rating = "+str(rating)+" WHERE product_id = "+product_id+" AND order_id = "+order_id)
+	session.execute(update_product_rating)
+	return True
+
+def getRating(product_id):
 
 
 def login(customer_id):
