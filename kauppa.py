@@ -65,6 +65,7 @@ def getOrderHistory(customer_id):
 	order_costSum = []
 	ordered = []
 	status = []
+	rated = []
 	for order in order_ids:
 		query_orderid_sessionid_customerid = ("SELECT product_id, ordered, status FROM orderid_sessionid_customerid WHERE order_id = "+str(order.order_id))
 		rows = session.execute(query_orderid_sessionid_customerid)
@@ -78,11 +79,18 @@ def getOrderHistory(customer_id):
 			#orders.append(str(row.product_id))
 			ordered.append((str(row.ordered))[0:10])
 			status.append(row.status)
+			query_rating = ("SELECT rating from product_rating WHERE product_id = "+str(row.product_id)+" AND order_id = "+str(order.order_id))
+			ratingRow = session.execute(query_rating)
+			for rating in ratingRow:
+				if rating.rating:
+					rated.append(True)
+				else:
+					rated.append(False)
 	total_cost = str(sum(order_costSum)/100)+" €"
 	order_names.append("TOTAL")
 	order_prices.append(total_cost)
 	table = [order_names, order_prices, ordered, status]
-	return (tabulate({'Products': order_names, 'Cost': order_prices, 'Ordered': ordered, 'Status': status}, headers='keys', tablefmt='html', stralign='left'))
+	return (tabulate({'Products': order_names, 'Cost': order_prices, 'Ordered': ordered, 'Status': status, 'Rated': rated}, headers='keys', tablefmt='html', stralign='left'))
 
 
 def buy(item, session_id, customer_id):
@@ -120,7 +128,16 @@ def rate(product_id, order_id, rating): # This could be done with just order_id 
 	return True
 
 def getRating(product_id):
-
+	ratelst = []
+	get_product_ratings = ("SELECT rating FROM product_rating WHERE product_id = "+product_id)
+	ratings = session.execute(get_product_ratings)
+	for rate in ratings:
+		if rate.rating:
+			ratelst.append(rate.rating)
+	if len(ratelst) != 0:
+		return sum(ratelst) / len(ratelst)
+	else:
+		return "product has not been rated yet."
 
 def login(customer_id):
 	customer = str(customer_id)

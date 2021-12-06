@@ -135,7 +135,8 @@ class StringGenerator(object):
         price = kauppa.getPrice(prod_id) / 100
         stock = kauppa.getStock(prod_id)
         name = kauppa.getProdName(prod_id)
-        return "<html><head>"+str(name)+"</head><body><p>Price: "+str(price)+"€</p><p>Stock: "+str(stock)+" units.</p><br><form method='get' action='buyProduct'><button name='prod_id' value="+prod_id+" type='submit'>Buy "+str(name)+"!</button></form></body></html>"
+        rating = kauppa.getRating(prod_id)
+        return "<html><head>"+str(name)+"</head><body><p>Price: "+str(price)+"€</p><p>Rating: "+str(rating)+" / 5</p><p>Stock: "+str(stock)+" units.</p><br><form method='get' action='buyProduct'><button name='prod_id' value="+prod_id+" type='submit'>Buy "+str(name)+"!</button></form></body></html>"
 
     @cherrypy.expose
     def buyProduct(self, prod_id):

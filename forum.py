@@ -55,6 +55,7 @@ def showChain(chain_id):
             query_comments = ("SELECT user_id, comment, timestamp FROM comments WHERE comment_id= " + str(comment_id))
             get_comments = session.execute(query_comments)
             for comment in get_comments:
+                karma = 0
                 # Get name of the user_id
                 query_customer_info = ("SELECT first_name, last_name FROM customer_info WHERE customer_id = " + str(
                     comment.user_id))
@@ -63,8 +64,8 @@ def showChain(chain_id):
                 for karma_row in karma_rows:
                     if karma_row.karma:
                         karma = karma_row.karma
-                    else:
-                        karma = 0
+                    #else:
+                    #    karma = 0
                 name_rows = session.execute(query_customer_info)
                 for name_row in name_rows:
                     name = (name_row.first_name + " " + name_row.last_name)
