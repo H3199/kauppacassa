@@ -409,4 +409,3 @@ CREATE TABLE testi.user_comment_history (
     AND min_index_interval = 128
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
-
