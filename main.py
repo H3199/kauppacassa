@@ -41,6 +41,9 @@ class StringGenerator(object):
             <form method="get" action="showOrderHistory">
               <button type="submit">Order history</button>
             </form>
+            <form method="get" action="displayCart">
+              <button type="submit">Shopping cart</button>
+            </form>
             <form method="get" action="logout">
               <button type="submit">logout</button>
             </form>
@@ -136,13 +139,19 @@ class StringGenerator(object):
         stock = kauppa.getStock(prod_id)
         name = kauppa.getProdName(prod_id)
         rating = kauppa.getRating(prod_id)
-        return "<html><head>"+str(name)+"</head><body><p>Price: "+str(price)+"€</p><p>Rating: "+str(rating)+" / 5</p><p>Stock: "+str(stock)+" units.</p><br><form method='get' action='buyProduct'><button name='prod_id' value="+prod_id+" type='submit'>Buy "+str(name)+"!</button></form></body></html>"
+        return "<html><head>"+str(name)+"</head><body><p>Price: "+str(price)+"€</p><p>Rating: "+str(rating)+" / 5</p><p>Stock: "+str(stock)+" units.</p><br><form method='get' action='addToCart'><button name='prod_id' value="+prod_id+" type='submit'>Add "+str(name)+" to cart</button></form></body></html>"
 
     @cherrypy.expose
     def buyProduct(self, prod_id):
         session_id = cherrypy.session['session_id']
         customer_id = cherrypy.session['customer_id']
         order_id = kauppa.buy(prod_id, session_id, customer_id)
+        return home_button
+
+    @cherrypy.expose
+    def addToCart(self, prod_id):
+        cart_id = cherrypy.session['cart_id']
+        kauppa.addToCart(cart_id, prod_id)
         return home_button
 
     @cherrypy.expose
@@ -157,6 +166,12 @@ class StringGenerator(object):
     def showOrderHistory(self):
         customer_id = cherrypy.session['customer_id']
         orders = kauppa.getOrderHistory(customer_id)
+        return orders
+
+    @cherrypy.expose
+    def displayCart(self):
+        cart_id = cherrypy.session['cart_id']
+        orders = kauppa.displayCart(cart_id)
         return orders
 
     @cherrypy.expose
@@ -178,6 +193,7 @@ class StringGenerator(object):
             cherrypy.session['customer_id'] = customer_id
             cherrypy.session['user_name'] = user_name
             cherrypy.session['login_time'] = session[1]
+            cherrypy.session['cart_id'] = session[2]
             return ("login correct for "+str(customer_id)) + " " + user_name + home_button
         else:
             return "login incorrect"

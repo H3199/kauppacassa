@@ -114,6 +114,44 @@ def buy(item, session_id, customer_id):
 	session.execute(query_product_rating)
 	return order_id
 
+def addToCart(cart_id, product_id):
+	get_product_count = ("SELECT count FROM cart_contents WHERE cart_id = "+cart_id+" AND product_id = "+product_id)
+	product_count = session.execute(get_product_count)
+	count = None
+	for product in product_count:
+		count = product.count
+	if count:
+		count += 1
+		update_cart_contents = ("UPDATE cart_contents SET count = "+str(count)+" WHERE cart_id = "+cart_id+" AND product_id = "+product_id)
+	else:
+		update_cart_contents = ("INSERT INTO cart_contents (cart_id, product_id, count) VALUES ("+cart_id+", "+product_id+", 1)")
+	session.execute(update_cart_contents)
+
+def displayCart(cart_id):
+	product_names = []
+	product_prices = []
+	product_counts = []
+	product_totals = []
+	get_cart_contents = ("SELECT product_id, count FROM cart_contents WHERE cart_id = "+str(cart_id))
+	products = session.execute(get_cart_contents)
+	for product in products:
+		if product.count:
+			product_counts.append(product.count)
+		else:
+			product_counts.append(0)
+		get_product_info = ("SELECT prod_name, prod_price FROM testable2 WHERE uuid = "+str(product.product_id))
+		product_info = session.execute(get_product_info)
+		for info in product_info:
+			product_names.append(info.prod_name)
+			product_prices.append((str(info.prod_price/100)+" €"))
+			product_totals.append(info.prod_price*product.count)
+	total_cost = str(sum(product_totals)/100)+" €"
+	product_names.append("Total: ")
+	product_prices.append(total_cost)
+	cart = [product_names, product_prices, product_counts]
+	#return cart
+	return (tabulate({'Products': product_names, 'Cost': product_prices, 'Count': product_counts}, headers='keys', tablefmt='html', stralign='left'))
+
 def rate(product_id, order_id, rating): # This could be done with just order_id and rating, but that would use an additional DB query.
 	if not 0 <= rating <= 5:
 		return False
@@ -142,15 +180,18 @@ def getRating(product_id):
 def login(customer_id):
 	customer = str(customer_id)
 	session_id = str(uuid.uuid4())
+	cart_id = str(uuid.uuid4())
 	now_iso8601 = datetime.datetime.now()
 	now = str(int(now_iso8601.timestamp()*1000))
 	query_login_sessions = ("INSERT INTO login_sessions (session_id, customer_id, login) VALUES ("+session_id+", "+customer+", \'"+now+"\')")
 	query_login_times = ("INSERT INTO login_times (session_id, customer_id, login) VALUES ("+session_id+","+customer+", \'"+now+"\')")
 	query_customer_sessions = ("INSERT INTO customer_sessions (session_id, customer_id, login) VALUES ("+session_id+", "+customer+", \'"+now+"\')")
+	create_cart = ("INSERT INTO session_carts (session_id, cart_id) VALUES ("+session_id+", "+cart_id+")")
 	session.execute(query_login_sessions)
 	session.execute(query_login_times)
 	session.execute(query_customer_sessions)
-	return [session_id, now]
+	session.execute(create_cart)
+	return [session_id, now, cart_id]
 
 def getLogin(session_id):
 	query = ("SELECT customer_id FROM customer_sessions WHERE session_id = " + session_id)
@@ -168,6 +209,7 @@ def logout(session_id, customer_id, login_time):
 	query_customer_sessions = ("UPDATE customer_sessions SET logout = \'"+now+"\' WHERE session_id = "+session_id)
 	query_login_sessions = ("UPDATE login_sessions SET logout = \'"+now+"\' WHERE session_id = "+session_id+" AND customer_id = "+customer_id+" IF EXISTS")
 	query_login_times = ("UPDATE login_times SET logout = \'"+now+"\' WHERE customer_id = "+customer_id+" AND login = \'"+login_time+"\' IF EXISTS")
+#	delete_cart = TODO
 	session.execute(query_customer_sessions)
 	session.execute(query_login_sessions)
 	session.execute(query_login_times)
