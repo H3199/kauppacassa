@@ -155,6 +155,14 @@ class StringGenerator(object):
         return home_button
 
     @cherrypy.expose
+    def orderCart(self):
+        cart_id = cherrypy.session['cart_id']
+        session_id = cherrypy.session['session_id']
+        customer_id = cherrypy.session['customer_id']
+        kauppa.orderCart(cart_id, session_id, customer_id)
+        return home_button
+
+    @cherrypy.expose
     def createUser(self, first_name, last_name, email, password):
         createUser.createUser(first_name, last_name, email, password)
 
@@ -172,7 +180,8 @@ class StringGenerator(object):
     def displayCart(self):
         cart_id = cherrypy.session['cart_id']
         orders = kauppa.displayCart(cart_id)
-        return orders
+        order = "<br><form method='get' action='orderCart'><button name='' value='' type='submit'>Order now!</button></form>"
+        return orders+order
 
     @cherrypy.expose
     # TODO: move checkCreds method here. /issues/2

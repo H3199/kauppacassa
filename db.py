@@ -2,6 +2,7 @@
 
 from cassandra.cluster import Cluster
 
-cluster = Cluster(['172.18.0.2'],port=9042)
+# DB connection is currently done via ssh and port forwarding
+cluster = Cluster(['127.0.0.1'],port=9043)
 session = cluster.connect('testi',wait_for_all_pools=True)
 session.execute('USE testi')
