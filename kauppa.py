@@ -164,6 +164,21 @@ def addToCart(cart_id, product_id):
     session.execute(update_cart_contents)
 
 
+def removeFromCart(cart_id, product_id):
+    get_product_count = ("SELECT count FROM cart_contents WHERE cart_id = " + cart_id + " AND product_id = " + product_id)
+    product_count = session.execute(get_product_count)
+    count = None
+    for product in product_count:
+        count = product.count
+    if count > 1:
+        count -= 1
+        update_cart_contents = ("UPDATE cart_contents SET count = " + str(count) + " WHERE cart_id = " + cart_id + " AND product_id = " + product_id)
+        session.execute(update_cart_contents)
+    elif count == 1:
+        update_cart_contents = ("DELETE FROM cart_contents WHERE cart_id = "+str(cart_id)+" AND product_id = "+str(product_id))
+        session.execute(update_cart_contents)
+
+
 def displayCart(cart_id):
     product_names = []
     product_prices = []
@@ -172,6 +187,8 @@ def displayCart(cart_id):
     get_cart_contents = ("SELECT product_id, count FROM cart_contents WHERE cart_id = " + str(cart_id))
     products = session.execute(get_cart_contents)
     for product in products:
+        #add_products.append([str(cart_id), str(product.product_id)])
+        #rem_products.append([str(cart_id), str(product.product_id)])
         if product.count:
             product_counts.append(product.count)
         else:
@@ -185,8 +202,6 @@ def displayCart(cart_id):
     total_cost = str(sum(product_totals) / 100) + " €"
     product_names.append("Total: ")
     product_prices.append(total_cost)
-    cart = [product_names, product_prices, product_counts]
-    # return cart
     return (tabulate({'Products': product_names, 'Cost': product_prices, 'Count': product_counts}, headers='keys',
                      tablefmt='html', stralign='left'))
 
@@ -248,7 +263,7 @@ def getLogin(session_id):
 
 
 # TODO: clearCart when logging out.
-def logout(session_id, customer_id, login_time):
+def logout(session_id, customer_id, login_time, cart_id=None):
     #	session_id = getLogin(customer_id)
     now_iso8601 = datetime.datetime.now()
     now = str(int(now_iso8601.timestamp() * 1000))
@@ -259,7 +274,8 @@ def logout(session_id, customer_id, login_time):
                 "UPDATE login_sessions SET logout = \'" + now + "\' WHERE session_id = " + session_id + " AND customer_id = " + customer_id + " IF EXISTS")
     query_login_times = (
                 "UPDATE login_times SET logout = \'" + now + "\' WHERE customer_id = " + customer_id + " AND login = \'" + login_time + "\' IF EXISTS")
-    #	delete_cart
+    if cart_id:
+        clearCart(cart_id)
     session.execute(query_customer_sessions)
     session.execute(query_login_sessions)
     session.execute(query_login_times)

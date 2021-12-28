@@ -154,6 +154,14 @@ class StringGenerator(object):
         kauppa.addToCart(cart_id, prod_id)
         return home_button
 
+
+    @cherrypy.expose
+    def removeFromCart(self, prod_id):
+        cart_id = cherrypy.session['cart_id']
+        kauppa.removeFromCart(cart_id, prod_id)
+        return home_button
+
+
     @cherrypy.expose
     def orderCart(self):
         cart_id = cherrypy.session['cart_id']
@@ -213,7 +221,8 @@ class StringGenerator(object):
             session_id = cherrypy.session['session_id']
             customer_id = cherrypy.session['customer_id']
             login_time = cherrypy.session['login_time']
-            kauppa.logout(session_id, customer_id, login_time)
+            cart_id = cherrypy.session['cart_id']
+            kauppa.logout(session_id, customer_id, login_time, cart_id)
             cherrypy.session['session_id'] = ""
             cherrypy.session['customer_id'] = ""
             cherrypy.session['user_name'] = ""
