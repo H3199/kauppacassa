@@ -170,13 +170,16 @@ class StringGenerator(object):
         kauppa.orderCart(cart_id, session_id, customer_id)
         return home_button
 
+
     @cherrypy.expose
     def createUser(self, first_name, last_name, email, password):
         createUser.createUser(first_name, last_name, email, password)
 
+
     @cherrypy.expose
     def createProduct(self, prod_name, prod_price, stock):
         createProduct.createProduct(prod_name, prod_price, stock)
+
 
     @cherrypy.expose
     def showOrderHistory(self):
@@ -184,12 +187,21 @@ class StringGenerator(object):
         orders = kauppa.getOrderHistory(customer_id)
         return orders
 
+
     @cherrypy.expose
     def displayCart(self):
         cart_id = cherrypy.session['cart_id']
         orders = kauppa.displayCart(cart_id)
         order = "<br><form method='get' action='orderCart'><button name='' value='' type='submit'>Order now!</button></form>"
-        return orders+order
+        save = "<br><form method='get' action='saveCart'><button name='' value='' type='submit'>Save cart</button></form>"
+        return orders+order+save
+
+
+    @cherrypy.expose
+    def saveCart(self):
+        session_id = cherrypy.session['session_id']
+        cherrypy.session['cart_saved'] = kauppa.saveCart(session_id)
+
 
     @cherrypy.expose
     # TODO: move checkCreds method here. /issues/2
@@ -226,6 +238,7 @@ class StringGenerator(object):
             cherrypy.session['session_id'] = ""
             cherrypy.session['customer_id'] = ""
             cherrypy.session['user_name'] = ""
+            cherrypy.session['cart_id'] = ""
             return ("Logged out." + home_button)
         except Exception as err:
 #            return ("You're not logged in." + home_button)

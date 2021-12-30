@@ -147,6 +147,12 @@ def clearCart(cart_id):
     # return True
 
 
+def saveCart(session_id):
+    set_save = ("UPDATE session_carts SET saved = True WHERE session_id = "+str(session_id))
+    session.execute(set_save)
+    return True
+
+
 def addToCart(cart_id, product_id):
     get_product_count = (
                 "SELECT count FROM cart_contents WHERE cart_id = " + cart_id + " AND product_id = " + product_id)
@@ -261,20 +267,23 @@ def getLogin(session_id):
     for row in rows:
         return row.customer_id
 
-
-# TODO: clearCart when logging out.
+# Why does logging out need login_time?
 def logout(session_id, customer_id, login_time, cart_id=None):
     #	session_id = getLogin(customer_id)
     now_iso8601 = datetime.datetime.now()
     now = str(int(now_iso8601.timestamp() * 1000))
     session_id = str(session_id)
     customer_id = str(customer_id)
+    query_cart_saved = ("SELECT saved FROM session_carts WHERE session_id = "+session_id)
+    cart_saved_r = session.execute(query_cart_saved)
+    for r in cart_saved_r:
+        cart_saved = r.saved
     query_customer_sessions = ("UPDATE customer_sessions SET logout = \'" + now + "\' WHERE session_id = " + session_id)
     query_login_sessions = (
                 "UPDATE login_sessions SET logout = \'" + now + "\' WHERE session_id = " + session_id + " AND customer_id = " + customer_id + " IF EXISTS")
     query_login_times = (
                 "UPDATE login_times SET logout = \'" + now + "\' WHERE customer_id = " + customer_id + " AND login = \'" + login_time + "\' IF EXISTS")
-    if cart_id:
+    if cart_id and not cart_saved:
         clearCart(cart_id)
     session.execute(query_customer_sessions)
     session.execute(query_login_sessions)
